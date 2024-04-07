@@ -75,6 +75,7 @@ class GAIL(Module):
             done = False
 
             ob = env.reset()
+            ob = ob[0]
 
             while not done and steps < num_steps_per_iter:
                 act = expert.act(ob)
@@ -85,7 +86,8 @@ class GAIL(Module):
 
                 if render:
                     env.render()
-                ob, rwd, done, info = env.step(act)
+                # TODO: handle truncated case?
+                ob, rwd, done, trnc, info = env.step(act)
 
                 ep_rwds.append(rwd)
 
@@ -97,7 +99,7 @@ class GAIL(Module):
                         done = True
                         break
 
-            if done:
+            if done or steps == num_steps_per_iter:
                 exp_rwd_iter.append(np.sum(ep_rwds))
 
             ep_obs = FloatTensor(np.array(ep_obs))
@@ -135,6 +137,7 @@ class GAIL(Module):
                 done = False
 
                 ob = env.reset()
+                ob = ob[0]
 
                 while not done and steps < num_steps_per_iter:
                     act = self.act(ob)
@@ -147,7 +150,7 @@ class GAIL(Module):
 
                     if render:
                         env.render()
-                    ob, rwd, done, info = env.step(act)
+                    ob, rwd, done, _, info = env.step(act)
 
                     ep_rwds.append(rwd)
                     ep_gms.append(gae_gamma ** t)
@@ -161,7 +164,7 @@ class GAIL(Module):
                             done = True
                             break
 
-                if done:
+                if done or steps == num_steps_per_iter:
                     rwd_iter.append(np.sum(ep_rwds))
 
                 ep_obs = FloatTensor(np.array(ep_obs))
