@@ -47,7 +47,7 @@ class GAIL(Module):
 
         return action
 
-    def train(self, env, expert, render=False):
+    def train(self, env, expert_data, render=False):
         num_iters = self.train_config["num_iters"]
         num_steps_per_iter = self.train_config["num_steps_per_iter"]
         horizon = self.train_config["horizon"]
@@ -61,47 +61,20 @@ class GAIL(Module):
 
         opt_d = torch.optim.Adam(self.d.parameters())
 
-        exp_rwd_iter = []
+        exp_rwd_iter = expert_data['rews']
+        exp_obs = expert_data['obs']
+        exp_acts = expert_data['acs']
 
-        exp_obs = []
-        exp_acts = []
+        if len(exp_rwd_iter) == 500:
+            temp_obs = []
+            temp_acts = []
+            for i in range(exp_rwd_iter.shape[0]):
+                temp_obs.extend(exp_obs[i])
+                temp_acts.extend(exp_acts[i])
+                exp_rwd_iter[i] = np.sum(exp_rwd_iter[i])
 
-        steps = 0
-        while steps < num_steps_per_iter:
-            ep_obs = []
-            ep_rwds = []
-
-            t = 0
-            done = False
-
-            ob = env.reset()
-
-            while not done and steps < num_steps_per_iter:
-                act = expert.act(ob)
-
-                ep_obs.append(ob)
-                exp_obs.append(ob)
-                exp_acts.append(act)
-
-                if render:
-                    env.render()
-                ob, rwd, done, info = env.step(act)
-
-                ep_rwds.append(rwd)
-
-                t += 1
-                steps += 1
-
-                if horizon is not None:
-                    if t >= horizon:
-                        done = True
-                        break
-
-            if done:
-                exp_rwd_iter.append(np.sum(ep_rwds))
-
-            ep_obs = FloatTensor(np.array(ep_obs))
-            ep_rwds = FloatTensor(ep_rwds)
+            exp_obs = np.array(temp_obs)
+            exp_acts = np.array(temp_acts)
 
         exp_rwd_mean = np.mean(exp_rwd_iter)
         print(
@@ -135,6 +108,7 @@ class GAIL(Module):
                 done = False
 
                 ob = env.reset()
+                ob = ob[0]
 
                 while not done and steps < num_steps_per_iter:
                     act = self.act(ob)
@@ -147,7 +121,7 @@ class GAIL(Module):
 
                     if render:
                         env.render()
-                    ob, rwd, done, info = env.step(act)
+                    ob, rwd, done, trnc, info = env.step(act)
 
                     ep_rwds.append(rwd)
                     ep_gms.append(gae_gamma ** t)
@@ -161,7 +135,7 @@ class GAIL(Module):
                             done = True
                             break
 
-                if done:
+                if done or steps == num_steps_per_iter:
                     rwd_iter.append(np.sum(ep_rwds))
 
                 ep_obs = FloatTensor(np.array(ep_obs))

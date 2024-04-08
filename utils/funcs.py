@@ -1,5 +1,46 @@
 import numpy as np
 import torch
+from torch import FloatTensor
+
+
+def gather_expert_data(env, expert, num_steps):
+    exp_rwd_iter = []
+    exp_obs = []
+    exp_acts = []
+
+    steps = 0
+    while steps < num_steps:
+        ep_obs = []
+        ep_rwds = []
+
+        t = 0
+        done = False
+
+        ob = env.reset()
+        ob = ob[0]
+
+        while not done and steps < num_steps:
+            act = expert.act(ob)
+
+            ep_obs.append(ob)
+            exp_obs.append(ob)
+            exp_acts.append(act)
+
+            # TODO: handle truncated case?
+            ob, rwd, done, trnc, info = env.step(act)
+
+            ep_rwds.append(rwd)
+
+            t += 1
+            steps += 1
+
+        if done or steps == num_steps:
+            exp_rwd_iter.append(np.sum(ep_rwds))
+
+        ep_obs = FloatTensor(np.array(ep_obs))
+        ep_rwds = FloatTensor(ep_rwds)
+
+    return exp_obs, exp_acts, exp_rwd_iter
 
 
 def get_flat_grads(f, net):
