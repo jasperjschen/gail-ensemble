@@ -11,13 +11,16 @@ from models.nets import Expert
 from models.gail import GAIL
 from utils.funcs import gather_expert_data
 
+TRAJECTORY_ENVS = ["Walker2d-v4", "HalfCheetah-v4", "Hopper-v4", "Humanoid-v4", "HumanoidStandup-v4"]
+ENVS = ["CartPole-v1", "Pendulum-v0", "BipedalWalker-v3"] + TRAJECTORY_ENVS
 
 def main(env_name):
     ckpt_path = "ckpts"
     if not os.path.isdir(ckpt_path):
         os.mkdir(ckpt_path)
-
-    if env_name not in ["CartPole-v1", "Pendulum-v0", "BipedalWalker-v3", "Walker2d-v4"]:
+    
+    # TODO: can just try catch or create some dictionary of names
+    if env_name not in ENVS:
         print("The environment name is wrong!")
         return
 
@@ -55,7 +58,7 @@ def main(env_name):
 
 
 
-    if env_name in ["Walker2d-v4"]:
+    if env_name in TRAJECTORY_ENVS:
         expert_data = np.load(os.path.join(expert_ckpt_path, "trajectories.npz"), allow_pickle=True)
     else:
         expert = Expert(
@@ -98,9 +101,9 @@ if __name__ == "__main__":
         "--env_name",
         type=str,
         default="CartPole-v1",
-        help="Type the environment name to run. \
+        help=f"Type the environment name to run. \
             The possible environments are \
-                [CartPole-v1, Pendulum-v0, BipedalWalker-v3, Walker2d-v4]"
+                {ENVS}"
     )
     args = parser.parse_args()
 
