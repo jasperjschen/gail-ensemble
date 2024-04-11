@@ -37,10 +37,25 @@ def gather_expert_data(env, expert, num_steps):
         if done or steps == num_steps:
             exp_rwd_iter.append(np.sum(ep_rwds))
 
-        ep_obs = FloatTensor(np.array(ep_obs))
-        ep_rwds = FloatTensor(ep_rwds)
-
     return exp_obs, exp_acts, exp_rwd_iter
+
+
+def process_traj_data(expert_data):
+    exp_rwd_iter = expert_data['rews']
+    exp_obs = expert_data['obs']
+    exp_acts = expert_data['acs']
+
+    temp_obs = []
+    temp_acts = []
+    for i in range(exp_rwd_iter.shape[0]):
+        temp_obs.extend(exp_obs[i])
+        temp_acts.extend(exp_acts[i])
+        exp_rwd_iter[i] = np.sum(exp_rwd_iter[i])
+
+    exp_obs = np.array(temp_obs)
+    exp_acts = np.array(temp_acts)
+
+    return {"rews": exp_rwd_iter, "obs": exp_obs, "acs": exp_acts}
 
 
 def get_flat_grads(f, net):

@@ -9,10 +9,11 @@ import numpy as np
 
 from models.nets import Expert
 from models.gail import GAIL
-from utils.funcs import gather_expert_data
+from utils.funcs import gather_expert_data, process_traj_data
 
 TRAJECTORY_ENVS = ["Walker2d-v4", "HalfCheetah-v4", "Hopper-v4", "Humanoid-v4", "HumanoidStandup-v4"]
 ENVS = ["CartPole-v1", "Pendulum-v0", "BipedalWalker-v3"] + TRAJECTORY_ENVS
+
 
 def main(env_name):
     ckpt_path = "ckpts"
@@ -56,10 +57,9 @@ def main(env_name):
     else:
         device = "cpu"
 
-
-
     if env_name in TRAJECTORY_ENVS:
         expert_data = np.load(os.path.join(expert_ckpt_path, "trajectories.npz"), allow_pickle=True)
+        expert_data = process_traj_data(expert_data)
     else:
         expert = Expert(
             state_dim, action_dim, discrete, **expert_config

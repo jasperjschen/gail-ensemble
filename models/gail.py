@@ -65,18 +65,6 @@ class GAIL(Module):
         exp_obs = expert_data['obs']
         exp_acts = expert_data['acs']
 
-        if len(exp_rwd_iter) == 500:
-            temp_obs = []
-            temp_acts = []
-            for i in range(exp_rwd_iter.shape[0]):
-                temp_obs.extend(exp_obs[i])
-                temp_acts.extend(exp_acts[i])
-                exp_rwd_iter[i] = np.sum(exp_rwd_iter[i])
-
-            exp_obs = np.array(temp_obs)
-            exp_acts = np.array(temp_acts)
-
-
         exp_rwd_mean = np.mean(exp_rwd_iter)
         print(
             "Expert Reward Mean: {}".format(exp_rwd_mean)
