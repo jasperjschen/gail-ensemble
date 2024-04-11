@@ -76,6 +76,7 @@ class GAIL(Module):
             exp_obs = np.array(temp_obs)
             exp_acts = np.array(temp_acts)
 
+
         exp_rwd_mean = np.mean(exp_rwd_iter)
         print(
             "Expert Reward Mean: {}".format(exp_rwd_mean)
@@ -121,6 +122,7 @@ class GAIL(Module):
 
                     if render:
                         env.render()
+
                     ob, rwd, done, trnc, info = env.step(act)
 
                     ep_rwds.append(rwd)
