@@ -57,6 +57,30 @@ def process_traj_data(expert_data):
 
     return {"rews": exp_rwd_iter, "obs": exp_obs, "acs": exp_acts}
 
+def bootstrap_expert_data(data, num_bags):    
+    # Get the lengths of the arrays
+    length = len(data["rews"])
+    
+    num_bags = min(length, num_bags)
+    # Generate random indices for shuffling
+    indices = np.arange(length)
+    np.random.shuffle(indices)
+    
+    # Split the indices into n_subsets
+    subset_indices = np.array_split(indices, num_bags)
+    
+    # Initialize lists to store subsets
+    subsets = []
+    
+    # Create subsets using the indices
+    for subset_idx in subset_indices:
+        subset = {}
+        for key, value in data.items():
+            subset[key] = [value[i] for i in subset_idx]
+        subsets.append(subset)
+    
+    return subsets
+
 
 def get_flat_grads(f, net):
     flat_grads = torch.cat([

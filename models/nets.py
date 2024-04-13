@@ -11,17 +11,17 @@ else:
 
 
 class PolicyNetwork(Module):
-    def __init__(self, state_dim, action_dim, discrete) -> None:
+    def __init__(self, state_dim, action_dim, discrete, hidden_size=50) -> None:
         super().__init__()
 
         self.net = Sequential(
-            Linear(state_dim, 50),
+            Linear(state_dim, hidden_size),
             Tanh(),
-            Linear(50, 50),
+            Linear(hidden_size, hidden_size),
             Tanh(),
-            Linear(50, 50),
+            Linear(hidden_size, hidden_size),
             Tanh(),
-            Linear(50, action_dim),
+            Linear(hidden_size, action_dim),
         )
 
         self.state_dim = state_dim
@@ -47,17 +47,17 @@ class PolicyNetwork(Module):
 
 
 class ValueNetwork(Module):
-    def __init__(self, state_dim) -> None:
+    def __init__(self, state_dim, hidden_size=50) -> None:
         super().__init__()
 
         self.net = Sequential(
-            Linear(state_dim, 50),
+            Linear(state_dim, hidden_size),
             Tanh(),
-            Linear(50, 50),
+            Linear(hidden_size, hidden_size),
             Tanh(),
-            Linear(50, 50),
+            Linear(hidden_size, hidden_size),
             Tanh(),
-            Linear(50, 1),
+            Linear(hidden_size, 1),
         )
 
     def forward(self, states):
@@ -65,7 +65,7 @@ class ValueNetwork(Module):
 
 
 class Discriminator(Module):
-    def __init__(self, state_dim, action_dim, discrete) -> None:
+    def __init__(self, state_dim, action_dim, discrete, hidden_size=50) -> None:
         super().__init__()
 
         self.state_dim = state_dim
@@ -81,13 +81,13 @@ class Discriminator(Module):
             self.net_in_dim = state_dim + action_dim
 
         self.net = Sequential(
-            Linear(self.net_in_dim, 50),
+            Linear(self.net_in_dim, hidden_size),
             Tanh(),
-            Linear(50, 50),
+            Linear(hidden_size, hidden_size),
             Tanh(),
-            Linear(50, 50),
+            Linear(hidden_size, hidden_size),
             Tanh(),
-            Linear(50, 1),
+            Linear(hidden_size, 1),
         )
 
     def forward(self, states, actions):

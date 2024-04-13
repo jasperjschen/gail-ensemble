@@ -74,7 +74,7 @@ def main(env_name):
 
     model = GAIL(state_dim, action_dim, discrete, config).to(device)
 
-    results = model.train(env, expert_data)
+    results = model.train(env, expert_data, print_every=1)
 
     env.close()
 
