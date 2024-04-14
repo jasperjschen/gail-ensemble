@@ -100,7 +100,7 @@ def ensemble_act(state, models, is_discrete, weights=None):
     return weighted_sum / total_weight if total_weight != 0 else 0
         
 
-def main(env_name):
+def main(env_name, num_bags):
     # check if env_name exists
     
     if env_name not in ENVS:
@@ -110,7 +110,7 @@ def main(env_name):
     # train models
     is_discrete = env_name in ["CartPole-v1"]
         
-    models = bagging_train(env_name)
+    models = bagging_train(env_name, num_bags)
     
     # evaluate
     # run 10 episodes with ensemble act
@@ -144,6 +144,12 @@ if __name__ == "__main__":
         help=f"Type the environment name to run. \
             The possible environments are \
                 {ENVS}"
+    )
+    parser.add_argument(
+        "--num_bags",
+        type=int,
+        choices=range(1, 10),
+        default=3
     )
     args = parser.parse_args()
 
