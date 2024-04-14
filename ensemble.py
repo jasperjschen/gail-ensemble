@@ -6,7 +6,7 @@ import argparse
 import torch
 import gymnasium as gym
 import numpy as np
-import statistics
+from scipy import stats
 
 from models.nets import Expert
 from models.gail import GAIL
@@ -87,7 +87,8 @@ def ensemble_act(state, models, is_discrete, weights=None):
     acts = [model.act(state) for model in models]
     
     if is_discrete:
-        return np.array([statistics.mode([val[0] for val in acts])])
+        mode = stats.mode(acts)
+        return mode.mode
         
     # assume average if weights is None
     if weights is None:
@@ -138,7 +139,7 @@ def main(env_name):
         ep_rewards.append(ep_reward)
     env.close()
     
-    print(f"Reward Mean: {np.mean(ep_rewards)}")
+    print(f"Test reward Mean: {np.mean(ep_rewards)}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
