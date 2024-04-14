@@ -77,7 +77,7 @@ def bagging_train(env_name, num_bags=3):
     models = []
     for i, data in enumerate(bags):
         print(f"training model {i+1}")
-        new_model = GAIL(state_dim, action_dim, discrete, config, hidden_size=10).to(device)
+        new_model = GAIL(state_dim, action_dim, discrete, config, hidden_size=50).to(device)
         new_model.train(env, data, print_every=10)
         models.append(new_model)
     return models
@@ -101,12 +101,7 @@ def ensemble_act(state, models, is_discrete, weights=None):
         
 
 def main(env_name):
-    # load checkpoints
-    ckpt_path = "ckpts"
-    
-    # check if checkpoint folder exists and env_name exists
-    if not os.path.isdir(ckpt_path):
-        print(f"No trained checkpoints on env {env_name}")
+    # check if env_name exists
     
     if env_name not in ENVS:
         print("The environment name is wrong!")
@@ -120,18 +115,17 @@ def main(env_name):
     # evaluate
     # run 10 episodes with ensemble act
     num_ep = 10
-    max_step = 1000
+    max_step = 2000
     
     env = gym.make(env_name)
-    
-    observation, info = env.reset()
-    terminated, truncated = False, False
     
     ep_rewards = []
     for _ in range(num_ep):
         steps = 0
         ep_reward = 0
-        while not terminated and not truncated and steps < max_step :
+        observation, info = env.reset()
+        terminated = False
+        while not terminated and steps < max_step :
             action = ensemble_act(observation, models, is_discrete)
             observation, reward, terminated, truncated, info = env.step(action)
             ep_reward += reward
