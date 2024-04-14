@@ -73,13 +73,31 @@ def bagging_train(env_name, num_bags=3):
     bags = bootstrap_expert_data(expert_data, num_bags)
     
     # train model
-    # TODO: add checkpoints for each model?
+    ensemble_ckpt_path = os.path.join(ckpt_path, 'ensemble')
+    if not os.path.isdir(ensemble_ckpt_path):
+        os.mkdir(ensemble_ckpt_path)
+
     models = []
     for i, data in enumerate(bags):
         print(f"training model {i+1}")
         new_model = GAIL(state_dim, action_dim, discrete, config, hidden_size=50).to(device)
         new_model.train(env, data, print_every=10)
         models.append(new_model)
+
+        # save checkpoint
+        if hasattr(new_model, "pi"):
+            torch.save(
+                new_model.pi.state_dict(), os.path.join(ensemble_ckpt_path, f"policy_{i}.ckpt")
+            )
+        if hasattr(new_model, "v"):
+            torch.save(
+                new_model.v.state_dict(), os.path.join(ensemble_ckpt_path, f"value_{i}.ckpt")
+            )
+        if hasattr(new_model, "d"):
+            torch.save(
+                new_model.d.state_dict(), os.path.join(ensemble_ckpt_path, f"discriminator_{i}.ckpt")
+            )
+
     return models
 
 def ensemble_act(state, models, is_discrete, weights=None):
