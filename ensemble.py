@@ -112,6 +112,8 @@ def main(env_name):
         return
 
     # train models
+    is_discrete = env_name in ["CartPole-v1"]
+        
     models = bagging_train(env_name)
     
     # evaluate
@@ -122,14 +124,14 @@ def main(env_name):
     env = gym.make(env_name)
     
     observation, info = env.reset()
-    terminated = False
+    terminated, truncated = False, False
     
     ep_rewards = []
     for _ in range(num_ep):
         steps = 0
         ep_reward = 0
         while not terminated and not truncated and steps < max_step :
-            action = ensemble_act(observation)
+            action = ensemble_act(observation, models, is_discrete)
             observation, reward, terminated, truncated, info = env.step(action)
             ep_reward += reward
             steps += 1
