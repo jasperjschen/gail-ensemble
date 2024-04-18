@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import wandb
 
 from torch.nn import Module
 
@@ -193,6 +194,7 @@ class GAIL(Module):
                 + torch.nn.functional.binary_cross_entropy_with_logits(
                     nov_scores, torch.ones_like(nov_scores)
                 )
+            wandb.log({"reward": np.mean(rwd_iter), "loss": loss})
             loss.backward()
             opt_d.step()
 

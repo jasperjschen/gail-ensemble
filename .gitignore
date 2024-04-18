@@ -138,3 +138,5 @@ ckpts
 
 # custom files
 results.ipynb
+
+wandb

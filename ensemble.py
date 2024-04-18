@@ -7,6 +7,8 @@ import torch
 import gymnasium as gym
 import numpy as np
 from scipy import stats
+import wandb
+
 
 from models.nets import Expert
 from models.gail import GAIL
@@ -80,8 +82,21 @@ def bagging_train(env_name, num_bags=3):
     models = []
     for i, data in enumerate(bags):
         print(f"training model {i+1}")
-        new_model = GAIL(state_dim, action_dim, discrete, config, hidden_size=50).to(device)
+        wandb.init(
+            # set the wandb project where this run will be logged
+            project="gail-ensemble",
+            # track hyperparameters and run metadata
+            config={
+                **config,
+                "environment": env_name,
+                "num_bags": bags,
+                "model_num": i+1,
+                "hidden_size": 25*(i+1),
+            }
+        )
+        new_model = GAIL(state_dim, action_dim, discrete, config, hidden_size=25*(i+1)).to(device)
         new_model.train(env, data, print_every=10)
+        wandb.finish()
         models.append(new_model)
 
         # save checkpoint
@@ -99,6 +114,7 @@ def bagging_train(env_name, num_bags=3):
             )
 
     return models
+
 
 def ensemble_act(state, models, is_discrete, weights=None):
     # get actions from each model

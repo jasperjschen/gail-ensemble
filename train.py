@@ -2,6 +2,7 @@ import os
 import json
 import pickle
 import argparse
+import wandb
 
 import torch
 import gymnasium as gym
@@ -72,7 +73,20 @@ def main(env_name):
         obs, acs, rews = gather_expert_data(env, expert, config["num_steps_per_iter"])
         expert_data = {"obs": obs, "acs": acs, "rews": rews}
 
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="gail-ensemble",
+        # track hyperparameters and run metadata
+        config={
+            **config,
+            "environment": env_name,
+            "num_bags": 1,
+            "model_num": 1,
+            "hidden_size": 50,
+        }
+    )
     model = GAIL(state_dim, action_dim, discrete, config).to(device)
+    wandb.finish()
 
     results = model.train(env, expert_data, print_every=1)
 
