@@ -17,7 +17,7 @@ from utils.funcs import gather_expert_data, process_traj_data, bootstrap_expert_
 TRAJECTORY_ENVS = ["Walker2d-v4", "HalfCheetah-v4", "Hopper-v4", "Humanoid-v4", "HumanoidStandup-v4"]
 ENVS = ["CartPole-v1", "Pendulum-v0", "BipedalWalker-v3"] + TRAJECTORY_ENVS
 
-def bagging_train(env_name, num_bags=3):
+def bagging_train(env_name, num_bags=3, num_layers=3):
     """Train models on env_name with different hidden size"""
     # load configs
     expert_ckpt_path = "experts"
@@ -81,7 +81,7 @@ def bagging_train(env_name, num_bags=3):
 
     models = []
     for i, data in enumerate(bags):
-        print(f"training model {i+1}")
+
         wandb.init(
             # set the wandb project where this run will be logged
             project="gail-ensemble",
@@ -89,12 +89,13 @@ def bagging_train(env_name, num_bags=3):
             config={
                 **config,
                 "environment": env_name,
-                "num_bags": bags,
+                "num_bags": len(bags),
                 "model_num": i+1,
+                "num_layers": num_layers,
                 "hidden_size": 25*(i+1),
             }
         )
-        new_model = GAIL(state_dim, action_dim, discrete, config, hidden_size=25*(i+1)).to(device)
+        new_model = GAIL(state_dim, action_dim, discrete, config, 25*(i+1), num_layers).to(device)
         new_model.train(env, data, print_every=10)
         wandb.finish()
         models.append(new_model)
@@ -134,7 +135,7 @@ def ensemble_act(state, models, is_discrete, weights=None):
     return weighted_sum / total_weight if total_weight != 0 else 0
         
 
-def main(env_name, num_bags):
+def main(env_name, num_bags, num_layers):
     # check if env_name exists
     
     if env_name not in ENVS:
@@ -144,7 +145,7 @@ def main(env_name, num_bags):
     # train models
     is_discrete = env_name in ["CartPole-v1"]
         
-    models = bagging_train(env_name, num_bags)
+    models = bagging_train(env_name, num_bags, num_layers)
     
     # evaluate
     # run 10 episodes with ensemble act
@@ -159,7 +160,7 @@ def main(env_name, num_bags):
         ep_reward = 0
         observation, info = env.reset()
         terminated = False
-        while not terminated and steps < max_step :
+        while not terminated and steps < max_step:
             action = ensemble_act(observation, models, is_discrete)
             observation, reward, terminated, truncated, info = env.step(action)
             ep_reward += reward
@@ -168,6 +169,7 @@ def main(env_name, num_bags):
     env.close()
     
     print(f"Test reward Mean: {np.mean(ep_rewards)}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -181,6 +183,13 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--num_bags",
+        type=int,
+        choices=range(1, 10),
+        default=3
+    )
+
+    parser.add_argument(
+        "--num_layers",
         type=int,
         choices=range(1, 10),
         default=3

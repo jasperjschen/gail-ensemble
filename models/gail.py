@@ -22,7 +22,8 @@ class GAIL(Module):
         action_dim,
         discrete,
         train_config=None,
-        hidden_size=50
+        hidden_size=50,
+        num_layers=3,
     ) -> None:
         super().__init__()
 
@@ -31,10 +32,10 @@ class GAIL(Module):
         self.discrete = discrete
         self.train_config = train_config
 
-        self.pi = PolicyNetwork(self.state_dim, self.action_dim, self.discrete, hidden_size)
-        self.v = ValueNetwork(self.state_dim, hidden_size)
+        self.pi = PolicyNetwork(self.state_dim, self.action_dim, self.discrete, hidden_size, num_layers)
+        self.v = ValueNetwork(self.state_dim, hidden_size, num_layers)
 
-        self.d = Discriminator(self.state_dim, self.action_dim, self.discrete, hidden_size)
+        self.d = Discriminator(self.state_dim, self.action_dim, self.discrete, hidden_size, num_layers)
 
     def get_networks(self):
         return [self.pi, self.v]
@@ -194,7 +195,6 @@ class GAIL(Module):
                 + torch.nn.functional.binary_cross_entropy_with_logits(
                     nov_scores, torch.ones_like(nov_scores)
                 )
-            wandb.log({"reward": np.mean(rwd_iter), "loss": loss})
             loss.backward()
             opt_d.step()
 
@@ -287,6 +287,10 @@ class GAIL(Module):
                 disc_causal_entropy, self.pi
             )
             new_params += lambda_ * grad_disc_causal_entropy
+
+            combined_pi_loss = L() + kld() + lambda_ * disc_causal_entropy
+
+            wandb.log({"reward": np.mean(rwd_iter), "loss": combined_pi_loss})
 
             set_params(self.pi, new_params)
 
