@@ -2,7 +2,7 @@
 
 This repository is for a simple implementation of Generative Adversarial Imitation Learning (GAIL) with PyTorch. This implementation is based on the original GAIL paper ([link](https://arxiv.org/abs/1606.03476)), and my Reinforcement Learning Collection repository ([link](https://github.com/hcnoh/rl-collection-pytorch)).
 
-In this repository, [OpenAI Gym](https://gym.openai.com/) environments such as `CartPole-v0`, `Pendulum-v0`, and `BipedalWalker-v3` are used. You need to install them before running this repository.
+In this repository, MuJoCo environments such as `Walker2d-v4`, `Hopper-v4`, and `Humanoid-v4` are used. You need to install them before running this repository.
 
 *Note*: The environment's names could be different depending on the version of OpenAI Gym.
 
