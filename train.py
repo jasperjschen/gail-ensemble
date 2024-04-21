@@ -2,17 +2,19 @@ import os
 import json
 import pickle
 import argparse
+import wandb
 
 import torch
 import gymnasium as gym
 import numpy as np
 
 from models.nets import Expert
-from models.gail import GAIL
+from models.gail import GAIL, WANDB_LOGGING
 from utils.funcs import gather_expert_data, process_traj_data
 
 TRAJECTORY_ENVS = ["Walker2d-v4", "HalfCheetah-v4", "Hopper-v4", "Humanoid-v4", "HumanoidStandup-v4"]
 ENVS = ["CartPole-v1", "Pendulum-v0", "BipedalWalker-v3"] + TRAJECTORY_ENVS
+
 
 
 def main(env_name):
@@ -72,9 +74,25 @@ def main(env_name):
         obs, acs, rews = gather_expert_data(env, expert, config["num_steps_per_iter"])
         expert_data = {"obs": obs, "acs": acs, "rews": rews}
 
-    model = GAIL(state_dim, action_dim, discrete, config).to(device)
+    for i in range(3):
 
-    results = model.train(env, expert_data)
+        if WANDB_LOGGING:
+            wandb.init(
+                # set the wandb project where this run will be logged
+                project="gail-ensemble",
+                # track hyperparameters and run metadata
+                config={
+                    **config,
+                    "environment": env_name,
+                    "num_bags": 1,
+                    "model_num": i,
+                    "hidden_size": 50,
+                }
+            )
+        model = GAIL(state_dim, action_dim, discrete, config).to(device)
+        results = model.train(env, expert_data, print_every=1)
+        if WANDB_LOGGING:
+            wandb.finish()
 
     env.close()
 

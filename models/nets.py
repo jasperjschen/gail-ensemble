@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import torch
 
 from torch.nn import Module, Sequential, Linear, Tanh, Parameter, Embedding
@@ -11,18 +13,23 @@ else:
 
 
 class PolicyNetwork(Module):
-    def __init__(self, state_dim, action_dim, discrete) -> None:
+    def __init__(self, state_dim, action_dim, discrete, hidden_size=50, num_layers=3) -> None:
         super().__init__()
 
-        self.net = Sequential(
-            Linear(state_dim, 50),
-            Tanh(),
-            Linear(50, 50),
-            Tanh(),
-            Linear(50, 50),
-            Tanh(),
-            Linear(50, action_dim),
-        )
+        layers = [
+            ('hidden1', Linear(state_dim, hidden_size)),
+            ('tanh1', Tanh()),
+        ]
+
+        # add in hidden layers
+        for i in range(num_layers - 1):
+            layers += [(f'hidden{i + 2}', Linear(hidden_size, hidden_size)), (f'tanh{i + 2}', Tanh())]
+
+        # output layer
+        layers.append(("output", Linear(hidden_size, action_dim)))
+
+        # create sequential model
+        self.net = Sequential(OrderedDict(layers))
 
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -47,25 +54,28 @@ class PolicyNetwork(Module):
 
 
 class ValueNetwork(Module):
-    def __init__(self, state_dim) -> None:
+    def __init__(self, state_dim, hidden_size=50, num_layers=3) -> None:
         super().__init__()
 
-        self.net = Sequential(
-            Linear(state_dim, 50),
-            Tanh(),
-            Linear(50, 50),
-            Tanh(),
-            Linear(50, 50),
-            Tanh(),
-            Linear(50, 1),
-        )
+        layers = [
+          ('hidden1', Linear(state_dim, hidden_size)),
+          ('tanh1', Tanh()),
+        ]
+
+        # add in hidden layers
+        for i in range(num_layers - 1):
+            layers += [(f'hidden{i+2}', Linear(hidden_size, hidden_size)),  (f'tanh{i+2}', Tanh())]
+        # output layer
+        layers.append(("output", Linear(hidden_size, 1)))
+        # create sequential model
+        self.net = Sequential(OrderedDict(layers))
 
     def forward(self, states):
         return self.net(states)
 
 
 class Discriminator(Module):
-    def __init__(self, state_dim, action_dim, discrete) -> None:
+    def __init__(self, state_dim, action_dim, discrete, hidden_size=50, num_layers=3) -> None:
         super().__init__()
 
         self.state_dim = state_dim
@@ -80,15 +90,18 @@ class Discriminator(Module):
         else:
             self.net_in_dim = state_dim + action_dim
 
-        self.net = Sequential(
-            Linear(self.net_in_dim, 50),
-            Tanh(),
-            Linear(50, 50),
-            Tanh(),
-            Linear(50, 50),
-            Tanh(),
-            Linear(50, 1),
-        )
+        layers = [
+            ('hidden1', Linear(self.net_in_dim, hidden_size)),
+            ('tanh1', Tanh()),
+        ]
+
+        # add in hidden layers
+        for i in range(num_layers - 1):
+            layers += [(f'hidden{i + 2}', Linear(hidden_size, hidden_size)), (f'tanh{i + 2}', Tanh())]
+        # output layer
+        layers.append(("output", Linear(hidden_size, 1)))
+        # create sequential model
+        self.net = Sequential(OrderedDict(layers))
 
     def forward(self, states, actions):
         return torch.sigmoid(self.get_logits(states, actions))

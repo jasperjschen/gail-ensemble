@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import wandb
 
 from torch.nn import Module
 
@@ -13,6 +14,8 @@ if torch.cuda.is_available():
 else:
     from torch import FloatTensor
 
+WANDB_LOGGING = False
+
 
 class GAIL(Module):
     def __init__(
@@ -20,7 +23,9 @@ class GAIL(Module):
         state_dim,
         action_dim,
         discrete,
-        train_config=None
+        train_config=None,
+        hidden_size=50,
+        num_layers=3,
     ) -> None:
         super().__init__()
 
@@ -29,10 +34,10 @@ class GAIL(Module):
         self.discrete = discrete
         self.train_config = train_config
 
-        self.pi = PolicyNetwork(self.state_dim, self.action_dim, self.discrete)
-        self.v = ValueNetwork(self.state_dim)
+        self.pi = PolicyNetwork(self.state_dim, self.action_dim, self.discrete, hidden_size, num_layers)
+        self.v = ValueNetwork(self.state_dim, hidden_size, num_layers)
 
-        self.d = Discriminator(self.state_dim, self.action_dim, self.discrete)
+        self.d = Discriminator(self.state_dim, self.action_dim, self.discrete, hidden_size, num_layers)
 
     def get_networks(self):
         return [self.pi, self.v]
@@ -47,7 +52,7 @@ class GAIL(Module):
 
         return action
 
-    def train(self, env, expert_data, render=False):
+    def train(self, env, expert_data, render=False, print_every=50):
         num_iters = self.train_config["num_iters"]
         num_steps_per_iter = self.train_config["num_steps_per_iter"]
         horizon = self.train_config["horizon"]
@@ -165,10 +170,12 @@ class GAIL(Module):
                 gms.append(ep_gms)
 
             rwd_iter_means.append(np.mean(rwd_iter))
-            print(
-                "Iterations: {},   Reward Mean: {}"
-                .format(i + 1, np.mean(rwd_iter))
-            )
+            
+            if ((i+1) % print_every == 0):
+                print(
+                    "Iterations: {},   Reward Mean: {}"
+                    .format(i + 1, np.mean(rwd_iter))
+                )
 
             obs = FloatTensor(np.array(obs))
             acts = FloatTensor(np.array(acts))
@@ -282,6 +289,11 @@ class GAIL(Module):
                 disc_causal_entropy, self.pi
             )
             new_params += lambda_ * grad_disc_causal_entropy
+
+            combined_pi_loss = L() + kld() + lambda_ * disc_causal_entropy
+
+            if WANDB_LOGGING:
+                wandb.log({"reward": np.mean(rwd_iter), "loss": combined_pi_loss})
 
             set_params(self.pi, new_params)
 

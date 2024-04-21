@@ -12,17 +12,16 @@ In this repository, [OpenAI Gym](https://gym.openai.com/) environments such as `
 
     ```bash
     $ pip install -r requirements.txt
+    $ pip install torch
+    $ pip install gymnasium[mujoco]
     ```
-
-3. Install other packages to run OpenAI Gym environments. These are dependent on the development setting of your machine.
-4. Install PyTorch. The version of PyTorch should be greater or equal than 1.7.0.
 
 ## Training and Running
 1. Modify `config.json` as your machine setting.
 2. Execute training process by `train.py`. An example of usage for `train.py` are following:
 
     ```bash
-    $ python train.py --env_name=BipedalWalker-v3
+    $ python ensemble.py --env_name=Walker2d-v4 --num_bags=3 --num_layers=3
     ```
 
     The following bash command will help you:
@@ -30,29 +29,6 @@ In this repository, [OpenAI Gym](https://gym.openai.com/) environments such as `
     ```bash
     $ python train.py -h
     ```
-
-## The results of CartPole environment
-
-![](/assets/img/README/README_2021-02-23-23-47-07.png)
-
-## The results of Pendulum environment
-
-![](/assets/img/README/README_2021-02-27-22-24-07.png)
-
-## The results of BipedalWalker environment
-
-![](/assets/img/README/README_2021-02-23-23-48-04.png)
-
-- This result suggests that the causal entropy has little effect on the performance.
-
-## Recent Works
-- The CUDA usage is provided now.
-- Modified some errors in GAE.
-- Modified some errors about horizon was corrected.
-
-## Future Works
-- Search other environments to running the algorithms
-
 
 ## References
 - The original GAIL paper: [link](https://arxiv.org/abs/1606.03476)
