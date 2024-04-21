@@ -9,11 +9,12 @@ import gymnasium as gym
 import numpy as np
 
 from models.nets import Expert
-from models.gail import GAIL
+from models.gail import GAIL, WANDB_LOGGING
 from utils.funcs import gather_expert_data, process_traj_data
 
 TRAJECTORY_ENVS = ["Walker2d-v4", "HalfCheetah-v4", "Hopper-v4", "Humanoid-v4", "HumanoidStandup-v4"]
 ENVS = ["CartPole-v1", "Pendulum-v0", "BipedalWalker-v3"] + TRAJECTORY_ENVS
+
 
 
 def main(env_name):
@@ -75,21 +76,23 @@ def main(env_name):
 
     for i in range(3):
 
-        wandb.init(
-            # set the wandb project where this run will be logged
-            project="gail-ensemble",
-            # track hyperparameters and run metadata
-            config={
-                **config,
-                "environment": env_name,
-                "num_bags": 1,
-                "model_num": i,
-                "hidden_size": 50,
-            }
-        )
+        if WANDB_LOGGING:
+            wandb.init(
+                # set the wandb project where this run will be logged
+                project="gail-ensemble",
+                # track hyperparameters and run metadata
+                config={
+                    **config,
+                    "environment": env_name,
+                    "num_bags": 1,
+                    "model_num": i,
+                    "hidden_size": 50,
+                }
+            )
         model = GAIL(state_dim, action_dim, discrete, config).to(device)
         results = model.train(env, expert_data, print_every=1)
-        wandb.finish()
+        if WANDB_LOGGING:
+            wandb.finish()
 
     env.close()
 

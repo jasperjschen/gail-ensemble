@@ -73,7 +73,7 @@
     },
     "Humanoid-v4": {
         "num_iters": 500,
-        "num_steps_per_iter": 1000,
+        "num_steps_per_iter": 2000,
         "horizon": null,
         "lambda": 1e-3,
         "gae_gamma": 0.99,

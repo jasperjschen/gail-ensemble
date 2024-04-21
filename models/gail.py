@@ -14,6 +14,8 @@ if torch.cuda.is_available():
 else:
     from torch import FloatTensor
 
+WANDB_LOGGING = False
+
 
 class GAIL(Module):
     def __init__(
@@ -290,7 +292,8 @@ class GAIL(Module):
 
             combined_pi_loss = L() + kld() + lambda_ * disc_causal_entropy
 
-            wandb.log({"reward": np.mean(rwd_iter), "loss": combined_pi_loss})
+            if WANDB_LOGGING:
+                wandb.log({"reward": np.mean(rwd_iter), "loss": combined_pi_loss})
 
             set_params(self.pi, new_params)
 

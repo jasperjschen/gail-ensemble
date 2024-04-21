@@ -11,7 +11,7 @@ import wandb
 
 
 from models.nets import Expert
-from models.gail import GAIL
+from models.gail import GAIL, WANDB_LOGGING
 from utils.funcs import gather_expert_data, process_traj_data, bootstrap_expert_data
 
 TRAJECTORY_ENVS = ["Walker2d-v4", "HalfCheetah-v4", "Hopper-v4", "Humanoid-v4", "HumanoidStandup-v4"]
@@ -81,23 +81,25 @@ def bagging_train(env_name, num_bags=3, num_layers=3):
 
     models = []
     for i, data in enumerate(bags):
-
-        wandb.init(
-            # set the wandb project where this run will be logged
-            project="gail-ensemble",
-            # track hyperparameters and run metadata
-            config={
-                **config,
-                "environment": env_name,
-                "num_bags": len(bags),
-                "model_num": i+1,
-                "num_layers": num_layers,
-                "hidden_size": 25*(i+1),
-            }
-        )
+        print(f"training model {i+1}")
+        if WANDB_LOGGING:
+            wandb.init(
+                # set the wandb project where this run will be logged
+                project="gail-ensemble",
+                # track hyperparameters and run metadata
+                config={
+                    **config,
+                    "environment": env_name,
+                    "num_bags": len(bags),
+                    "model_num": i+1,
+                    "num_layers": num_layers,
+                    "hidden_size": 25*(i+1),
+                }
+            )
         new_model = GAIL(state_dim, action_dim, discrete, config, 25*(i+1), num_layers).to(device)
         new_model.train(env, data, print_every=10)
-        wandb.finish()
+        if WANDB_LOGGING:
+            wandb.finish()
         models.append(new_model)
 
         # save checkpoint

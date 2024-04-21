@@ -9,6 +9,7 @@ def gather_expert_data(env, expert, num_steps):
     exp_acts = []
 
     steps = 0
+    # run env loop to get trajectories from policy
     while steps < num_steps:
         ep_obs = []
         ep_rwds = []
@@ -45,6 +46,7 @@ def process_traj_data(expert_data):
     exp_obs = expert_data['obs']
     exp_acts = expert_data['acs']
 
+    # flatten out trajectory data
     temp_obs = []
     temp_acts = []
     for i in range(exp_rwd_iter.shape[0]):
@@ -56,6 +58,7 @@ def process_traj_data(expert_data):
     exp_acts = np.array(temp_acts)
 
     return {"rews": exp_rwd_iter, "obs": exp_obs, "acs": exp_acts}
+
 
 def bootstrap_expert_data(data, num_bags):    
     # Get the lengths of the arrays
